@@ -1,0 +1,18 @@
+main
+	__FillZeros
+	UART5_Init_Advanced
+		UARTx_Init_Advanced
+			RCC_GetClocksFrequency
+				Get_Fosc_kHz
+			GPIO_Alternate_Function_Enable
+				GPIO_Config_Pin_Alternate_Function
+					GPIO_Config
+						GPIO_Clk_Enable
+	Proceso
+		UART5_Tx_Idle
+			UARTx_Tx_Idle
+		IntToStr
+			WordToStr
+		UART5_Write_Text
+			UARTx_Write_Text
+				UARTx_Write

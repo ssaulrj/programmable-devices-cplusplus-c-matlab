@@ -1,0 +1,514 @@
+﻿                                                     #include <Pantalla.h>
+#include <built_in.h>
+//TFT CONECCTIONS
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+//#include "hello_world_resources1.h"
+#include "DSP15VTFT_resources.c"
+#include "DSP15VTFT_objects.h"
+void Proceso();
+void InitPantalla();
+void Start_TP();
+void Init_Ext_Mem();
+void Init_MCU();
+
+static void InitializeObjects();
+// Extern memory interface
+// MMC/SD Connections
+sbit Mmc_Chip_Select           at GPIOD_ODR.B3;      //SD_SS?
+// end of MMC/SD
+// TFT Get Data globals
+char Ext_Data_Buffer[512];
+unsigned long currentSector = -1, res_file_size;
+// end of TFT Get Data
+// End of extern memory interface
+
+
+unsigned int TFT_DataPort at GPIOE_ODR;
+sbit TFT_DataPort_B0 at GPIOA_ODR.B9;    //-
+sbit TFT_DataPort_B1 at GPIOC_ODR.B7;    //
+sbit TFT_DataPort_B2 at GPIOA_ODR.B10;   //-
+sbit TFT_DataPort_B3 at GPIOB_ODR.B6;    //CAMBIAR B3 POR B6
+sbit TFT_DataPort_B4 at GPIOB_ODR.B5;    //
+sbit TFT_DataPort_B5 at GPIOB_ODR.B4;    //
+sbit TFT_DataPort_B6 at GPIOB_ODR.B10;  //
+sbit TFT_DataPort_B7 at GPIOA_ODR.B8;  //-
+sbit TFT_RST at GPIOC_ODR.B1;    //
+sbit TFT_CS at GPIOB_ODR.B0;     //
+sbit TFT_RS at GPIOA_ODR.B4;     //
+sbit TFT_WR at GPIOA_ODR.B1;     //
+sbit TFT_RD at GPIOA_ODR.B0;     //
+
+// Global variables
+unsigned int Xcoord, Ycoord;
+const ADC_THRESHOLD = 1500;
+char PenDown;
+void *PressedObject;
+int PressedObjectType;
+unsigned int caption_length, caption_height;
+unsigned int display_width, display_height;
+
+int _object_count;
+unsigned short object_pressed;
+TImage *local_image;
+TImage *exec_image;
+int image_order;
+
+unsigned short estado_SD;
+
+//unsigned int mx1,my1,mx2,my2,mi;
+
+char* TFT_Get_Data(unsigned long offset, unsigned long count, unsigned long *num) {
+unsigned long start_sector;
+unsigned int fpos;
+
+  start_sector = Mmc_Get_File_Write_Sector() + offset/512;
+  fpos = (unsigned long)offset%512;
+
+  if(start_sector == currentSector+1) {
+    Mmc_Multi_Read_Sector(Ext_Data_Buffer);
+    currentSector = start_sector;
+  } else if (start_sector != currentSector) {
+    if(currentSector != -1)
+      Mmc_Multi_Read_Stop();
+    Mmc_Multi_Read_Start(start_sector);
+    Mmc_Multi_Read_Sector(Ext_Data_Buffer);
+    currentSector = start_sector;
+  }
+
+  if(count>512-fpos)
+    *num = 512-fpos;
+  else
+    *num = count;
+
+  return Ext_Data_Buffer+fpos;
+}
+
+
+
+/////////////////////////
+  TScreen*  CurrentScreen;
+
+  TScreen                Screen1;
+  TImage               Image1;
+  TImage                 * const code Screen1_Images[1]=
+         {
+         &Image1
+         };
+
+  TScreen                Screen2;
+  TImage               Image2;
+  TImage                 * const code Screen2_Images[1]=
+         {
+         &Image2
+         };
+
+  TScreen                Screen3;
+  TImage               Image3;
+  TImage                 * const code Screen3_Images[1]=
+         {
+         &Image3
+         };
+
+  TScreen                Screen4;
+  TImage               Image4;
+  TImage                 * const code Screen4_Images[1]=
+         {
+         &Image4
+         };
+
+  TScreen                Screen5;
+  TImage               Image5;
+  TImage                 * const code Screen5_Images[1]=
+         {
+         &Image5
+         };
+
+static void InitializeObjects() {
+  Screen1.Color                     = 0x5AEB;
+  Screen1.Width                     = 320;
+  Screen1.Height                    = 240;
+  Screen1.ImagesCount               = 1;
+  Screen1.Images                    = Screen1_Images;
+  Screen1.ObjectsCount              = 1;
+
+  Screen2.Color                     = 0x5AEB;
+  Screen2.Width                     = 320;
+  Screen2.Height                    = 240;
+  Screen2.ImagesCount               = 1;
+  Screen2.Images                    = Screen2_Images;
+  Screen2.ObjectsCount              = 1;
+
+  Screen3.Color                     = 0x5AEB;
+  Screen3.Width                     = 320;
+  Screen3.Height                    = 240;
+  Screen3.ImagesCount               = 1;
+  Screen3.Images                    = Screen3_Images;
+  Screen3.ObjectsCount              = 1;
+
+  Screen4.Color                     = 0x5AEB;
+  Screen4.Width                     = 320;
+  Screen4.Height                    = 240;
+  Screen4.ImagesCount               = 1;
+  Screen4.Images                    = Screen4_Images;
+  Screen4.ObjectsCount              = 1;
+
+  Screen5.Color                     = 0x5AEB;
+  Screen5.Width                     = 320;
+  Screen5.Height                    = 240;
+  Screen5.ImagesCount               = 1;
+  Screen5.Images                    = Screen5_Images;
+  Screen5.ObjectsCount              = 1;
+
+
+  Image1.OwnerScreen     = &Screen1;
+  Image1.Order           = 0;
+  Image1.Left            = 0;
+  Image1.Top             = 1;
+  Image1.Width           = 320;
+  Image1.Height          = 240;
+  Image1.Picture_Type    = 0;
+  Image1.Picture_Ratio   = 1;
+  Image1.Picture_Name    = FATPANDA_bmp;
+  Image1.Visible         = 1;
+  Image1.Active          = 1;
+  Image1.OnUpPtr         = 0;
+  Image1.OnDownPtr       = 0;
+  Image1.OnClickPtr      = 0;
+  Image1.OnPressPtr      = 0;
+
+  Image2.OwnerScreen     = &Screen2;
+  Image2.Order           = 0;
+  Image2.Left            = 102;
+  Image2.Top             = 45;
+  Image2.Width           = 120;
+  Image2.Height          = 160;
+  Image2.Picture_Type    = 0;
+  Image2.Picture_Ratio   = 1;
+  Image2.Picture_Name    = F1_bmp;
+  Image2.Visible         = 1;
+  Image2.Active          = 1;
+  Image2.OnUpPtr         = 0;
+  Image2.OnDownPtr       = 0;
+  Image2.OnClickPtr      = 0;
+  Image2.OnPressPtr      = 0;
+
+  Image3.OwnerScreen     = &Screen3;
+  Image3.Order           = 0;
+  Image3.Left            = 106;
+  Image3.Top             = 34;
+  Image3.Width           = 120;
+  Image3.Height          = 160;
+  Image3.Picture_Type    = 0;
+  Image3.Picture_Ratio   = 1;
+  Image3.Picture_Name    = F2_bmp;
+  Image3.Visible         = 1;
+  Image3.Active          = 1;
+  Image3.OnUpPtr         = 0;
+  Image3.OnDownPtr       = 0;
+  Image3.OnClickPtr      = 0;
+  Image3.OnPressPtr      = 0;
+
+  Image4.OwnerScreen     = &Screen4;
+  Image4.Order           = 0;
+  Image4.Left            = 86;
+  Image4.Top             = 28;
+  Image4.Width           = 120;
+  Image4.Height          = 160;
+  Image4.Picture_Type    = 0;
+  Image4.Picture_Ratio   = 1;
+  Image4.Picture_Name    = F3_bmp;
+  Image4.Visible         = 1;
+  Image4.Active          = 1;
+  Image4.OnUpPtr         = 0;
+  Image4.OnDownPtr       = 0;
+  Image4.OnClickPtr      = 0;
+  Image4.OnPressPtr      = 0;
+
+  Image5.OwnerScreen     = &Screen5;
+  Image5.Order           = 0;
+  Image5.Left            = 95;
+  Image5.Top             = 44;
+  Image5.Width           = 120;
+  Image5.Height          = 160;
+  Image5.Picture_Type    = 0;
+  Image5.Picture_Ratio   = 1;
+  Image5.Picture_Name    = F4_bmp;
+  Image5.Visible         = 1;
+  Image5.Active          = 1;
+  Image5.OnUpPtr         = 0;
+  Image5.OnDownPtr       = 0;
+  Image5.OnClickPtr      = 0;
+  Image5.OnPressPtr      = 0;
+}
+
+
+void Proceso(){
+ TFT_Write_Char('B',5,5);
+ Delay_ms(500);
+ //TFT_Set_Font(TFT_defaultFont, CL_WHITE, FO_HORIZONTAL);
+ //TFT_Write_Text("TFT LIBRARY DEMO, WELCOME !", 5, 20);
+//TFT_Set_Pen(CL_WHITE, 1);
+ //TFT_Circle(120, 100, 50);
+ //TFT_Rectangle_Round_Edges(5, 170, 235, 275, 12);
+ //TFT_Image(0, 0, mikroe_logo_bmp, 1);
+
+ TFT_Image(0, 0, FATPANDA_bmp, 1);
+ Delay_ms(500);
+
+ TFT_Fill_Screen(CL_WHITE);
+ TFT_Image(100, 40, F1_bmp, 1);
+ Delay_ms(500);
+
+TFT_Fill_Screen(CL_WHITE);
+ if(estado_SD==1)
+ {TFT_Write_Text("FAT16 BOOT NOT FOUND =(", 5, 20);
+ }
+ else if(estado_SD==255)
+ {TFT_Write_Text("SD NOT DETECTED =(", 5, 20);
+ }
+ else if(estado_SD==0)
+ {TFT_Write_Text("SD EXITOSA!!", 5, 20);
+ }
+ else
+ {TFT_Write_Text("DESCONOCIDO (??)", 5, 20);
+ }
+ Delay_ms(4000);
+
+
+ display_width = Screen1.width;
+ display_height = Screen1.Height;
+
+ TFT_Fill_Screen(CL_WHITE);
+ TFT_Write_Text("IMAGEN 1", 5, 20);
+ Delay_ms(3000);
+ DrawScreen(&Screen1);
+ Delay_ms(500);
+
+ TFT_Fill_Screen(CL_WHITE);
+ TFT_Write_Text("IMAGEN 2", 5, 20);
+ Delay_ms(3000);
+ DrawScreen(&Screen2);
+ Delay_ms(500);
+
+ //TFT_Fill_Screen(CL_WHITE);
+}
+
+void TFT_Set_Index_Custom(unsigned short index) {
+unsigned int temp;
+ TFT_RS = 0;
+ //Write to port
+ //temp = TFT_DataPort;
+ //temp &= 0xFF00;
+ //TFT_DataPort = index | temp;
+ temp = index;
+ TFT_DataPort_B0 = ((temp & 0x01) >> 0 );
+ TFT_DataPort_B1 = ((temp & 0x02) >> 1 );
+ TFT_DataPort_B2 = ((temp & 0x04) >> 2 );
+ TFT_DataPort_B3 = ((temp & 0x08) >> 3 );
+ TFT_DataPort_B4 = ((temp & 0x10) >> 4 );
+ TFT_DataPort_B5 = ((temp & 0x20) >> 5 );
+ TFT_DataPort_B6 = ((temp & 0x40) >> 6 );
+ TFT_DataPort_B7 = ((temp & 0x80) >> 7 );
+ // Strobe
+ TFT_WR = 0;
+ asm nop;
+ TFT_WR = 1;
+}
+void TFT_Write_Command_Custom(unsigned short cmd) {
+unsigned int temp;
+ TFT_RS = 1;
+ //Write to port
+ //temp = TFT_DataPort;
+ //temp &= 0xFF00;
+ //TFT_DataPort = cmd | temp;
+ temp = cmd;
+ TFT_DataPort_B0 = ((temp & 0x01) >> 0 );
+ TFT_DataPort_B1 = ((temp & 0x02) >> 1 );
+ TFT_DataPort_B2 = ((temp & 0x04) >> 2 );
+ TFT_DataPort_B3 = ((temp & 0x08) >> 3 );
+ TFT_DataPort_B4 = ((temp & 0x10) >> 4 );
+ TFT_DataPort_B5 = ((temp & 0x20) >> 5 );
+ TFT_DataPort_B6 = ((temp & 0x40) >> 6 );
+ TFT_DataPort_B7 = ((temp & 0x80) >> 7 );
+ // Strobe
+ TFT_WR = 0;
+ asm nop;
+ TFT_WR = 1;
+}
+void TFT_Write_Data_Custom(unsigned int _data) {
+unsigned int temp;
+ TFT_RS = 1;
+ //Write to port
+ //temp = TFT_DataPort;
+ //temp &= 0xFF00;
+ //TFT_DataPort = Hi(_data) | temp;
+ temp = Hi(_data);
+ TFT_DataPort_B0 = ((temp & 0x01) >> 0 );
+ TFT_DataPort_B1 = ((temp & 0x02) >> 1 );
+ TFT_DataPort_B2 = ((temp & 0x04) >> 2 );
+ TFT_DataPort_B3 = ((temp & 0x08) >> 3 );
+ TFT_DataPort_B4 = ((temp & 0x10) >> 4 );
+ TFT_DataPort_B5 = ((temp & 0x20) >> 5 );
+ TFT_DataPort_B6 = ((temp & 0x40) >> 6 );
+ TFT_DataPort_B7 = ((temp & 0x80) >> 7 );
+ // Strobe
+ TFT_WR = 0;
+ asm nop;
+ TFT_WR = 1;
+ //Write to port
+ //temp = TFT_DataPort;
+ //temp &= 0xFF00;
+ //TFT_DataPort = Lo(_data) | temp;
+ temp = Lo(_data);
+ TFT_DataPort_B0 = ((temp & 0x01) >> 0 );
+ TFT_DataPort_B1 = ((temp & 0x02) >> 1 );
+ TFT_DataPort_B2 = ((temp & 0x04) >> 2 );
+ TFT_DataPort_B3 = ((temp & 0x08) >> 3 );
+ TFT_DataPort_B4 = ((temp & 0x10) >> 4 );
+ TFT_DataPort_B5 = ((temp & 0x20) >> 5 );
+ TFT_DataPort_B6 = ((temp & 0x40) >> 6 );
+ TFT_DataPort_B7 = ((temp & 0x80) >> 7 );
+ // Strobe
+ TFT_WR = 0;
+ asm nop;
+ TFT_WR = 1;
+}
+void InitPantalla(){
+ GPIO_Config(&GPIOA_BASE, _GPIO_PINMASK_9| _GPIO_PINMASK_10|
+_GPIO_PINMASK_8,_GPIO_CFG_MODE_OUTPUT | _GPIO_CFG_SPEED_2MHZ | _GPIO_CFG_OTYPE_PP);
+
+ GPIO_Config(&GPIOB_BASE, _GPIO_PINMASK_0 |_GPIO_PINMASK_4 | _GPIO_PINMASK_5 | _GPIO_PINMASK_6 |
+_GPIO_PINMASK_10 ,_GPIO_CFG_MODE_OUTPUT | _GPIO_CFG_SPEED_2MHZ | _GPIO_CFG_OTYPE_PP);    //CAMBIAR 3 POR 6
+
+ GPIO_Config(&GPIOC_BASE,_GPIO_PINMASK_1 | _GPIO_PINMASK_7 ,_GPIO_CFG_MODE_OUTPUT |
+_GPIO_CFG_SPEED_2MHZ | _GPIO_CFG_OTYPE_PP);
+
+ GPIO_Digital_Output(&GPIOA_BASE,_GPIO_PINMASK_0 |_GPIO_PINMASK_1 |_GPIO_PINMASK_4 |
+_GPIO_PINMASK_9 | _GPIO_PINMASK_10 | _GPIO_PINMASK_8 );
+
+ GPIO_Digital_Output(&GPIOB_BASE,_GPIO_PINMASK_3 | _GPIO_PINMASK_4 | _GPIO_PINMASK_5 |
+_GPIO_PINMASK_10);
+
+ GPIO_Digital_Output(&GPIOC_BASE, _GPIO_PINMASK_7);
+
+ TFT_Set_Active(&TFT_Set_Index_Custom, &TFT_Write_Command_Custom, &TFT_Write_Data_Custom);
+ TFT_Init_ILI9341_8bit_Custom(240, 320);
+}
+
+void Start_TP() {
+  Init_MCU();
+
+  Init_Ext_Mem();
+
+  //quite funciones touch panel
+
+  //InitializeObjects();
+  /*
+  display_width = Main_Screen.Width;
+  display_height = Main_Screen.Height;
+  DrawScreen(&Main_Screen);*/
+}
+
+#define GetImage(index)               CurrentScreen->Images[index]
+void DrawImage(TImage *AImage) {
+  if (AImage->Visible != 0) {
+    TFT_Ext_Image(AImage->Left, AImage->Top, AImage->Picture_Name, AImage->Picture_Ratio);
+  }
+}
+
+void DrawScreen(TScreen *aScreen) {
+ unsigned int order;
+  unsigned short image_idx;
+  TImage *local_image;
+  char save_bled, save_bled_direction;
+
+  object_pressed = 0;
+  order = 0;
+  image_idx = 0;
+  CurrentScreen = aScreen;
+
+  if ((display_width != CurrentScreen->Width) || (display_height != CurrentScreen->Height)) {
+    //save_bled = TFT_BLED;
+    //TFT_BLED           = 0;
+    TFT_Init(CurrentScreen->Width, CurrentScreen->Height);
+    TFT_Set_Ext_Buffer(TFT_Get_Data);
+    //TP_TFT_Init(CurrentScreen->Width, CurrentScreen->Height, 8, 9);                                  // Initialize touch panel
+    //TP_TFT_Set_ADC_Threshold(ADC_THRESHOLD);                              // Set touch panel ADC threshold
+    TFT_Fill_Screen(CurrentScreen->Color);
+    display_width = CurrentScreen->Width;
+    display_height = CurrentScreen->Height;
+    //TFT_BLED           = save_bled;
+  }
+  else
+    TFT_Fill_Screen(CurrentScreen->Color);
+
+
+  while (order < CurrentScreen->ObjectsCount) {
+    if (image_idx < CurrentScreen->ImagesCount) {
+      local_image = GetImage(image_idx);
+      if (order == local_image->Order) {
+        image_idx++;
+        order++;
+        DrawImage(local_image);
+      }
+    }
+
+  }
+}
+
+void Init_MCU() {
+  GPIO_Digital_Output(&GPIOD_BASE, _GPIO_PINMASK_3);  //CAMBIAR E9 A D3
+  //TFT_BLED = 1;
+  TFT_Set_Default_Mode();
+  //TP_TFT_Set_Default_Mode();
+}
+
+void Init_Ext_Mem() {
+  // Initialize SPI
+  SPI3_Init_Advanced(_SPI_FPCLK_DIV64, _SPI_MASTER | _SPI_8_BIT |
+                                                 _SPI_CLK_IDLE_LOW | _SPI_FIRST_CLK_EDGE_TRANSITION |
+                                                 _SPI_MSB_FIRST | _SPI_SS_DISABLE | _SPI_SSM_ENABLE | _SPI_SSI_1,
+                                                 &_GPIO_MODULE_SPI3_PC10_11_12);
+  //mmc_error = Mmc_Init();  //Inicializar a MMC Card
+  Delay_ms(10);
+  //--- init the FAT library
+  if (!Mmc_Fat_Init()) {
+
+    SPI3_CR1 = 0;
+    // reinitialize spi at higher speed
+    SPI3_Init_Advanced(_SPI_FPCLK_DIV2, _SPI_MASTER | _SPI_8_BIT |
+                                        _SPI_CLK_IDLE_LOW | _SPI_FIRST_CLK_EDGE_TRANSITION |
+                                              _SPI_MSB_FIRST | _SPI_SS_DISABLE | _SPI_SSM_ENABLE | _SPI_SSI_1,
+                                              &_GPIO_MODULE_SPI3_PC10_11_12);
+    // Open resource file for read
+    Mmc_Fat_Assign("DSP15VTF.RES", 0);
+    Mmc_Fat_Reset(&res_file_size);
+    estado_SD= Mmc_Fat_Init();
+  }
+  else
+  {
+     estado_SD= Mmc_Fat_Init();
+  }
+}
+
+void main()
+{
+ GPIO_Analog_Input(&GPIOA_BASE, _GPIO_PINMASK_0);
+ GPIO_Config(&GPIOA_BASE, _GPIO_PINMASK_0, _GPIO_CFG_MODE_ANALOG | _GPIO_CFG_PULL_NO);
+
+
+ InitPantalla();
+ TFT_Init_ILI9341_8bit(320, 240);    //yA SE ENCUENTRA EN INITPANTALLA
+ InitializeObjects();
+ //TFT_Fill_Screen(CL_WHITE);
+ Start_TP();
+   while(1){
+
+   Proceso();
+   Delay_ms(500);
+   }
+}

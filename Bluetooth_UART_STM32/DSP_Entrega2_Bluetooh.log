@@ -1,0 +1,11 @@
+0	1	mikroCARM.exe -MSF -DBG -pSTM32F446RE -BIN -LHF -DL -SSA -O11111114 -fo16 -N"C:\Users\Saulp\Downloads\stm_DP\DSPEntrega2\DSP_Entrega2_Bluetooh.mcpar" -SP"C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for ARM\Defs\" -SP"C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for ARM\Uses\ST M4\" -SP"C:\Users\Saulp\Downloads\stm_DP\DSPEntrega2\" -IP"C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for ARM\Uses\TI M3\" -IP"C:\Users\Saulp\Downloads\stm_DP\DSPEntrega2\" "DSP_Entrega2_Bluetooh.c" "__Lib_Math.emcl" "__Lib_MathDouble.emcl" "__Lib_Delays.emcl" "__Lib_System_4XXHS.emcl" "__Lib_GPIO_32F44x_Defs.emcl" "__Lib_GPIO_32F44x.emcl" "__Lib_CString.emcl" "__Lib_Conversions.emcl" "__Lib_SoftUART.emcl" "__Lib_UART_123_45_6.emcl" "__Lib_TFT.emcl" "__Lib_TFT_Defs.emcl"	 
+diagnostics: 0	122	Compilation Started	DSP_Entrega2_Bluetooh.c
+diagnostics: 23	123	Compiled Successfully	DSP_Entrega2_Bluetooh.c
+diagnostics: 0	127	All files Compiled in 1265 ms	 
+hint: 0	1144	Used RX: 16 (100%)   Free RX: 0 (0%)	Used RX: 16 (100%)   Free RX: 0 (0%)
+hint: 0	1144	Static RAM (bytes): 44   Dynamic RAM (bytes): 131025	Static RAM (bytes): 44   Dynamic RAM (bytes): 131025
+hint: 0	1144	Used ROM (bytes): 4376 (1%)  Free ROM (bytes): 519912 (99%)	Used ROM (bytes): 4376 (1%)  Free ROM (bytes): 519912 (99%)
+diagnostics: 0	125	Project Linked Successfully	DSP_Entrega2_Bluetooh.mcpar
+diagnostics: 0	128	Linked in 3891 ms	 
+diagnostics: 0	129	Project 'DSP_Entrega2_Bluetooh.mcpar' completed: 6813 ms	 
+diagnostics: 0	103	Finished successfully: 16 abr. 2019, 16:18:54	DSP_Entrega2_Bluetooh.mcpar
