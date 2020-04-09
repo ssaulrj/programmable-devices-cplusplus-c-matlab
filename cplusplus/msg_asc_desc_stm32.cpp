@@ -1,0 +1,116 @@
+﻿#define BOTON GPIOC_IDR.B13   //Boton de usuario
+#define BOTON2 GPIOB_IDR.B9   //Entrada externa PB9
+
+#define DISPLAY1 GPIOB_ODR
+#define DISPLAY2 GPIOC_ODR
+
+#define LED GPIOC_ODR.B8
+#define CERO     0XC0
+#define UNO      0XF9
+#define DOS      0XA4
+#define TRES     0XB0
+#define CUATRO   0X99
+#define CINCO    0X92
+#define SEIS     0X82
+#define SIETE    0XF8
+#define OCHO     0X80
+#define NUEVE    0X90
+#define CARA     0X88
+#define CARB     0X83
+#define CARC     0XA7
+#define CARD     0XA1
+#define CARE     0X86
+#define CARF     0X8E
+#define CARP     0X8C
+#define CARR     0XAF
+#define CART     0X87
+#define CARI     0XF9
+#define CAR      0XFF
+#define SEGa     0XFE
+#define SEGb     0XFD
+#define SEGc     0XFB
+#define SEGd     0XF7
+#define SEGe     0XEF
+#define SEGf     0XDF
+#define SEGg     0XBF
+
+#define t_delay 1000
+
+//Prototipos de funciones
+void Conf_maq();
+void Ini_var();
+void Proceso();
+
+//Declara variables globales
+const unsigned short int segmentos[]={CERO,UNO,DOS,TRES,CUATRO,CINCO,SEIS,SIETE,
+                                      OCHO,NUEVE,CARA,CARB,CARC,CARD,CARE,CARF,
+                                      CARP,CARR,CARA,CARC,CART,CARI,CARC,CARA,CAR,UNO,CERO };
+unsigned short int contador, n; //n es el indice del último caracter a mostrar (# caract - 1)
+//int t_delay;
+
+void main() {
+    Conf_maq();
+    Ini_var();
+    while(1) //Bucle principal
+    Proceso();
+}
+
+void Conf_maq()
+{
+
+ //BOTON DE USUARION
+ GPIO_Digital_Input(&GPIOC_BASE,_GPIO_PINMASK_13);    //Entrada con Pullup usando el botón de usuario (PC13)
+                                                      //(Entrada normalmente en alto y el botón se activa en bajo)
+ //ENTRADA EXTERNA PB9
+ GPIO_Config(&GPIOB_BASE,
+              _GPIO_PINMASK_9,
+              _GPIO_CFG_MODE_INPUT | _GPIO_CFG_PULL_DOWN);  //Entrada con Pulldown usando el pin PB9
+
+
+ //DISPLAY1
+ GPIO_Config(&GPIOB_BASE, _GPIO_PINMASK_0 | _GPIO_PINMASK_1 | _GPIO_PINMASK_2 | _GPIO_PINMASK_3
+                        | _GPIO_PINMASK_4 | _GPIO_PINMASK_5 | _GPIO_PINMASK_6 | _GPIO_PINMASK_7,
+                          _GPIO_CFG_MODE_OUTPUT | _GPIO_CFG_SPEED_2MHZ | _GPIO_CFG_OTYPE_PP);
+
+ //DISPLAY2
+ GPIO_Config(&GPIOC_BASE, _GPIO_PINMASK_0 | _GPIO_PINMASK_1 | _GPIO_PINMASK_2 | _GPIO_PINMASK_3
+                        | _GPIO_PINMASK_4 | _GPIO_PINMASK_5 | _GPIO_PINMASK_6 | _GPIO_PINMASK_7,
+                          _GPIO_CFG_MODE_OUTPUT | _GPIO_CFG_SPEED_2MHZ | _GPIO_CFG_OTYPE_PP);
+}
+ 
+void Ini_var(){
+  n = 9;  //9 -> CONTAR DEL 0 AL 9 || 26 -> MENSAJE LARGO (012..F PRACTICA 10)
+  contador = -1;
+  LED=0;
+  //t_delay = 750;
+}
+
+void Proceso(){
+
+  if(BOTON==0){
+
+      if(++contador==n+1){ 
+          contador=0;
+      }
+
+      DISPLAY1 = segmentos[contador];     //MENSAJE ASCENDENTE
+      DISPLAY2 = segmentos[n-contador];   //MENSAJE DESCENDENTE
+
+      Delay_ms(t_delay);
+
+  }else if(BOTON2==1){
+
+      if(++contador==n+1){ 
+          contador=0;
+      }
+
+      DISPLAY1 = segmentos[n-contador];   //MENSAJE DESCENDENTE
+      DISPLAY2 = segmentos[contador];     //MENSAJE ASCENDENTE
+
+      Delay_ms(t_delay);
+
+  }else{
+      contador = -1;
+  }
+
+}
